@@ -5,7 +5,9 @@
 #define N 5
 using namespace std;
 
-// Variáveis globais para controle
+//constante para guardar o tamanho da string
+const int TAM_STR = 100;
+
 int totalUsu = 0;
 int totalLivros = 0;
 int totalAutores = 0;
@@ -13,27 +15,24 @@ int totalAutores = 0;
 // Estrutura para o cadastro do usuário
 struct Usuario {
     int matricula;
-    string nome;
-    string tipo; // Aluno ou Professor
+    char nome[TAM_STR];
+    char tipo[TAM_STR];
 };
-
 
 // Estrutura para o cadastro do livro
 struct Livro {
     int codigo;
-    string titulo;
-    string autor;
-    string edicao;
-    int matriculaUsuario; // matrícula do usuário que emprestou
+    char titulo[TAM_STR];
+    char autor[TAM_STR];
+    char edicao[TAM_STR];
+    int matriculaUsuario;
 };
 
-//estrutura para cadastro de autor
+// Estrutura para cadastro de autor/nova para projeto 2
 struct Autor{
-    string nome;
-    string nacionalidade;
+    char nome[TAM_STR];
+    char nacionalidade[TAM_STR];
 };
-
-// sub rotinas
 
 // Exibe o menu principal
 void mostrarMenu() {
@@ -46,11 +45,15 @@ void mostrarMenu() {
     cout << "6 - Listar Autores\n";
     cout << "7 - Listar Livros por Usuario\n";
     cout << "8 - Relatorio Final\n";
-    cout << "9 - Salvar informacoes\n";
-    cout << "10 - Carregar informacoes\n";
+    cout << "9 - Salvar informacoes (Binario)\n";
+    cout << "10 - Carregar informacoes (Binario)\n";
     cout << "11 - Sair\n";
     cout << "-------------------------------------------------\n";
     cout << "Digite sua opcao: ";
+}
+
+void limparBuffer() {
+    cin.ignore(10000, '\n');
 }
 
 // Função para cadastrar usuário
@@ -61,23 +64,27 @@ void cadastrarUsu(Usuario usuarios[], int tamanMax) {
     }
 
     Usuario novoUsu;
+    memset(&novoUsu, 0, sizeof(Usuario));
+
     cout << "Digite a MATRICULA do Usuario: ";
     cin >> novoUsu.matricula;
 
-    // Verifica se matrícula já existe
     for (int i = 0; i < totalUsu; i++) {
         if (usuarios[i].matricula == novoUsu.matricula) {
             cout << "Essa matricula ja foi cadastrada!\n";
+            cin.clear();
+            limparBuffer();
             return;
         }
     }
 
-    cin.ignore(); // limpar buffer
+    limparBuffer();
+
     cout << "Digite o NOME do Usuario: ";
-    getline(cin, novoUsu.nome);
+    cin.getline(novoUsu.nome, TAM_STR);
 
     cout << "Digite o TIPO do usuario (Aluno ou Professor): ";
-    cin >> novoUsu.tipo;
+    cin.getline(novoUsu.tipo, TAM_STR);
 
     usuarios[totalUsu] = novoUsu;
     totalUsu++;
@@ -85,25 +92,26 @@ void cadastrarUsu(Usuario usuarios[], int tamanMax) {
     cout << "Usuario cadastrado com sucesso!\n";
 }
 
+// Função para cadastrar autor (novo cadastro)
 void cadastrarAutor(Autor autores[], int tamAutores){
     if (totalAutores >= tamAutores) {
-        cout << "Limite de livros atingido!\n";
+        cout << "Limite de autores atingido!\n";
         return;
     }
 
     Autor novoAutor;
-    cin.ignore();
-    cout << "Digite o primeiro NOME do Autor: ";
-    getline(cin, novoAutor.nome);
+    memset(&novoAutor, 0, sizeof(Autor));
 
-    cout << "Digite a NACIONALIDADE do autor): ";
-    cin >> novoAutor.nacionalidade;
+    cout << "Digite o NOME do Autor: ";
+    cin.getline(novoAutor.nome, TAM_STR);
+
+    cout << "Digite a NACIONALIDADE do autor: ";
+    cin.getline(novoAutor.nacionalidade, TAM_STR);
 
     autores[totalAutores] = novoAutor;
     totalAutores++;
 
     cout << "Autor cadastrado com sucesso!\n";
-
 }
 
 // Função para cadastrar livro
@@ -114,48 +122,59 @@ void cadastrarLivro(Livro livros[], Usuario usuarios[], int tamLivros, int tamUs
     }
 
     Livro novoLivro;
+    memset(&novoLivro, 0, sizeof(Livro));
+
     cout << "Digite o CODIGO do livro: ";
     cin >> novoLivro.codigo;
 
-    // Verifica duplicidade
     for (int i = 0; i < totalLivros; i++) {
         if (livros[i].codigo == novoLivro.codigo) {
             cout << "Esse codigo ja foi cadastrado!\n";
+            cin.clear();
+            limparBuffer();
             return;
         }
     }
 
-    cin.ignore();
+    limparBuffer();
+
     cout << "Digite o TITULO do livro: ";
-    getline(cin, novoLivro.titulo);
+    cin.getline(novoLivro.titulo, TAM_STR);
 
     cout << "Digite o AUTOR do livro: ";
-    getline(cin, novoLivro.autor);
+    cin.getline(novoLivro.autor, TAM_STR);
 
     cout << "Digite a EDICAO do livro: ";
-    getline(cin, novoLivro.edicao);
+    cin.getline(novoLivro.edicao, TAM_STR);
 
-    cout << "Digite a MATRICULA do usuario que esta pegando o livro: ";
-    cin >> novoLivro.matriculaUsuario;
+    cout << "Digite a MATRICULA do usuario que esta pegando o livro (0 se nao estiver emprestado): ";
 
-    // Verifica se o usuário existe
-    int usuarioExiste = 0;
-    for (int i = 0; i < totalUsu; i++) {
-        if (usuarios[i].matricula == novoLivro.matriculaUsuario) {
-            usuarioExiste = 1;
-            break;
-        }
+    if (!(cin >> novoLivro.matriculaUsuario)) {
+        cout << "Entrada de matricula invalida. Definindo para 0 (nao emprestado).\n";
+        novoLivro.matriculaUsuario = 0;
+        cin.clear();
+        limparBuffer();
     }
 
-    if (usuarioExiste == 0) {
-        cout << "Usuario nao encontrado! Livro nao cadastrado.\n";
-        return;
+    if (novoLivro.matriculaUsuario != 0) {
+        int usuarioExiste = 0;
+        for (int i = 0; i < totalUsu; i++) {
+            if (usuarios[i].matricula == novoLivro.matriculaUsuario) {
+                usuarioExiste = 1;
+                break;
+            }
+        }
+
+        if (usuarioExiste == 0) {
+            cout << "AVISO: Usuario nao encontrado! O livro sera cadastrado, mas a matricula do emprestimo foi zerada.\n";
+            novoLivro.matriculaUsuario = 0;
+        }
     }
 
     livros[totalLivros] = novoLivro;
     totalLivros++;
 
-    cout << "Livro cadastrado e associado com sucesso!\n";
+    cout << "Livro cadastrado com sucesso!\n";
 }
 
 // Lista todos os usuários cadastrados
@@ -189,10 +208,12 @@ void listarLivros(Livro livros[], Usuario usuarios[]) {
         cout << "Edicao: " << livros[i].edicao << endl;
 
         string nomeUsuario = "Nao foi emprestado";
-        for (int j = 0; j < totalUsu; j++) {
-            if (usuarios[j].matricula == livros[i].matriculaUsuario) {
-                nomeUsuario = usuarios[j].nome;
-                break;
+        if (livros[i].matriculaUsuario != 0) {
+            for (int j = 0; j < totalUsu; j++) {
+                if (usuarios[j].matricula == livros[i].matriculaUsuario) {
+                    nomeUsuario = usuarios[j].nome;
+                    break;
+                }
             }
         }
         cout << "Foi emprestado para: " << nomeUsuario << endl;
@@ -219,10 +240,24 @@ void listarAutores(Autor autor[]) {
 void buscarLivrosPorUsuario(Livro livros[], Usuario usuarios[]) {
     int matriculaBusca;
     cout << "Digite a matricula do usuario: ";
-    cin >> matriculaBusca;
+    if (!(cin >> matriculaBusca)) {
+        cout << "Entrada de matricula invalida.\n";
+        cin.clear();
+        limparBuffer();
+        return;
+    }
 
     int encontrou = 0;
-    cout << "\nLivros emprestados para o usuario " << matriculaBusca << ":\n";
+
+    string nomeUsuario = "Matricula Inexistente";
+    for (int i = 0; i < totalUsu; i++) {
+        if (usuarios[i].matricula == matriculaBusca) {
+            nomeUsuario = usuarios[i].nome;
+            break;
+        }
+    }
+
+    cout << "\nLivros emprestados para o usuario " << nomeUsuario << " (Matrícula " << matriculaBusca << "):\n";
 
     for (int i = 0; i < totalLivros; i++) {
         if (livros[i].matriculaUsuario == matriculaBusca) {
@@ -232,13 +267,14 @@ void buscarLivrosPorUsuario(Livro livros[], Usuario usuarios[]) {
     }
 
     if (encontrou == 0) {
-        cout << "Nao tem livro encontrado para esse usuario.\n";
+        cout << "Nao ha livro encontrado para esse usuario.\n";
     }
 }
 
-// Relatório geral com quantos  livros estão emprestados para cada usuário e autores cadastrados
+// Relatório geral
 void relatorioFinal(Livro livros[], Usuario usuarios[], Autor vet[]) {
     cout << "\n----------- RELATORIO GERAL -----------\n";
+    cout << "--- Contagem de Livros por Usuario ---\n";
     for (int i = 0; i < totalUsu; i++) {
         int contador = 0;
         for (int j = 0; j < totalLivros; j++) {
@@ -248,48 +284,66 @@ void relatorioFinal(Livro livros[], Usuario usuarios[], Autor vet[]) {
         }
         cout << usuarios[i].nome << " possui " << contador << " livro(s) emprestado(s).\n";
     }
+    cout << "--- Total de Cadastros ---\n";
+    cout << "Total de Usuarios cadastrados: " << totalUsu << endl;
+    cout << "Total de Livros cadastrados: " << totalLivros << endl;
+    cout << "Total de Autores cadastrados: " << totalAutores << endl;
     cout << "---------------------------------------\n";
 }
 
-// salvar as informacoes
-void salvar(Usuario vet[], Livro livros[], Autor autor[], int n){//salvou string?
+// Salva as informações de todos os cadastros e contadores em um arquivo binário
+void salvar(Usuario vet[], Livro livros[], Autor autor[], int n) {
     fstream meuArquivo;
 
-    meuArquivo.open("biblioteca.bin", ios::out | ios::binary);
+    meuArquivo.open("biblioteca.bin", ios::out | ios::binary | ios::trunc);
 
     if(meuArquivo.is_open()) {
-        meuArquivo.write((char *) vet, sizeof(Usuario) * n);
-        meuArquivo.write((char *) livros, sizeof(Livro) * n);
-        meuArquivo.write((char *) autor, sizeof(Autor) * n);
         meuArquivo.write((char *) &totalUsu, sizeof(totalUsu));
         meuArquivo.write((char *) &totalLivros, sizeof(totalLivros));
         meuArquivo.write((char *) &totalAutores, sizeof(totalAutores));
+
+        meuArquivo.write((char *) vet, sizeof(Usuario) * totalUsu);
+        meuArquivo.write((char *) livros, sizeof(Livro) * totalLivros);
+        meuArquivo.write((char *) autor, sizeof(Autor) * totalAutores);
+
         meuArquivo.close();
-        cout << "Informacoes salvas com sucesso!!\n";
+        cout << "Informacoes salvas com sucesso em 'biblioteca.bin'!\n";
     }
     else {
-        cout << "Falha ao gravar informacoes.\n";
+        cout << "Falha ao gravar informacoes. Verifique as permissoes de escrita.\n";
     }
 }
+
+// Carrega as informações de todos os cadastros e contadores de um arquivo binário
 void carregar(Usuario vet[], Livro livros[], Autor autor[], int n) {
     fstream meuArquivo;
     meuArquivo.open("biblioteca.bin", ios::in | ios::binary);
 
     if(meuArquivo.is_open()) {
-        meuArquivo.read((char *) vet, sizeof(Usuario) * n);
-        meuArquivo.read((char *) livros, sizeof(Livro) * n);
-        meuArquivo.read((char *) autor, sizeof(Autor) * n);
         meuArquivo.read((char *) &totalUsu, sizeof(totalUsu));
         meuArquivo.read((char *) &totalLivros, sizeof(totalLivros));
         meuArquivo.read((char *) &totalAutores, sizeof(totalAutores));
+
+        if (totalUsu > N || totalLivros > N || totalAutores > N) {
+             cout << "ERRO: O arquivo contem mais dados do que o limite do sistema (N=" << N << "). Dados podem estar incompletos.\n";
+             totalUsu = (totalUsu > N) ? N : totalUsu;
+             totalLivros = (totalLivros > N) ? N : totalLivros;
+             totalAutores = (totalAutores > N) ? N : totalAutores;
+        }
+
+        meuArquivo.read((char *) vet, sizeof(Usuario) * totalUsu);
+        meuArquivo.read((char *) livros, sizeof(Livro) * totalLivros);
+        meuArquivo.read((char *) autor, sizeof(Autor) * totalAutores);
+
         meuArquivo.close();
-        cout << "Informacoes carregadas com sucesso!!\n";
+        cout << "Informacoes carregadas com sucesso de 'biblioteca.bin'!\n";
     } else {
-        cout << "Falha ao carregar informacoes.\n";
+        cout << "Falha ao carregar informacoes. O arquivo 'biblioteca.bin' pode nao existir ou esta inacessivel.\n";
+        totalUsu = 0;
+        totalLivros = 0;
+        totalAutores = 0;
     }
 }
-
-
 
 int main() {
     Usuario vetorUsuarios[N];
@@ -299,7 +353,17 @@ int main() {
 
     do {
         mostrarMenu();
-        cin >> opcao;
+
+        if (!(cin >> opcao)) {
+            cout << "Entrada invalida. Por favor, digite um numero.\n";
+            cin.clear();
+            limparBuffer();
+            opcao = 0;
+            continue;
+        }
+
+        limparBuffer();
+
 
         switch (opcao) {
             case 1:
@@ -328,16 +392,26 @@ int main() {
                 break;
             case 9:
                 salvar(vetorUsuarios, vetorLivros, vetorAutores, N );
+                cout << "\nPressione ENTER para voltar ao menu...";
+                cin.get();
+                break;
             case 10:
                 carregar(vetorUsuarios, vetorLivros, vetorAutores, N );
+
+                cout << "\n--- Dados carregados! Exibindo Usuarios... ---";
+                listarUsu(vetorUsuarios);
+
+                cout << "\nPressione ENTER para voltar ao menu...";
+                cin.get();
+                break;
             case 11:
-                cout << "Sistema encerrado ;|\n";
+                cout << "Sistema encerrado!\n";
                 break;
             default:
-                cout << "Nao deu certo! Tente de novo.\n";
+                cout << "Opcao invalida! Tente de novo.\n";
                 break;
         }
-    } while (opcao != 12);
+    } while (opcao != 11);
 
     return 0;
 }
